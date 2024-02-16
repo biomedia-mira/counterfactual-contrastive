@@ -1,0 +1,24 @@
+channels:
+  - pytorch
+  - default
+dependencies:
+  - python=3.11
+  - pytorch
+  - torchvision
+  - pip
+  - pip:
+    - lightning
+    - pandas
+    - numpy
+    - scikit-learn
+    - hydra-core
+    - wandb
+    - jupyter
+    - flake8
+    - black
+    - matplotlib
+    - seaborn
+    - pytest
+    - pyro_ppl==1.8.4
+    - Send2Trash==1.8.2
+    - imageio==2.26.0

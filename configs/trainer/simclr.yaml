@@ -1,0 +1,10 @@
+defaults:
+  - base.yaml
+  - _self_
+name: simclr
+loss: "simclr"
+contrastive_temperature: 0.1
+return_two_views: True
+num_epochs: 1000
+patience_for_scheduler: 100
+max_steps: 400000

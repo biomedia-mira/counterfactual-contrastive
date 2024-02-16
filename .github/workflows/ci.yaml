@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: main
+  pull_request:
+    branches: main
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Conda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+          environment-file: environmentCI.yml
+          python-version: 3.11.0
+          auto-activate-base: true
+    - name: Lint with flake8
+      run: |
+        python -V
+        conda info
+         # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --extend-ignore=E203 --show-source --statistics --max-line-length=119

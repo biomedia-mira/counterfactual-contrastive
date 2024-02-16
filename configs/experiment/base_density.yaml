@@ -1,0 +1,25 @@
+# @package _global_
+defaults:
+  - override /trainer: base
+  - override /data: embed
+
+data:
+  batch_size: 32
+  augmentations:
+    random_crop: [.9, 1.]
+    random_rotation: 5
+    random_color_jitter: .2
+    horizontal_flip: True
+    vertical_flip: False
+    center_crop: [224, 192]
+
+model:
+  encoder_name: "resnet50"
+  pretrained: True
+  
+trainer:
+  patience_for_scheduler: 25
+  metric_to_monitor: "Val/AUROC"
+  metric_to_monitor_mode: "max"
+  lr: 1e-5
+  val_check_interval: 1000

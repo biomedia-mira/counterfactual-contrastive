@@ -97,6 +97,8 @@ def train_model_main(config):
             model_module = model_module.eval()
             for p in model_module.parameters():
                 p.requires_grad = False
+        else:
+            model_module = model_module.train()
 
         model_module.model.reset_classifier(data_module.num_classes)
 

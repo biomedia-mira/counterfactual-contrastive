@@ -29,6 +29,7 @@ def extract_run_type(run_name):
 
 
 def extract_pretraining_type(run_name):
+    run_name = re.split(r"-", run_name, maxsplit=1)[0]
     if "simclrcfaug" in run_name:
         return "SimCLR with CF\nin training set"
     if "simclrcf" in run_name:
@@ -41,6 +42,7 @@ def extract_pretraining_type(run_name):
 
 
 def extract_finetuning_type(run_name):
+    run_name = re.split(r"-", run_name, maxsplit=1)[0]
     if "head" in run_name:
         return "Linear Probing"
     if "supervisedcf" in run_name or "cffine" in run_name:

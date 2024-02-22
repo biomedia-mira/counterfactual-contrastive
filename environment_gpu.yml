@@ -9,7 +9,7 @@ dependencies:
   - pytorch-cuda=12.1
   - pip
   - pip:
-    - lightning
+    - lightning>=2.2.0
     - pandas
     - numpy
     - scikit-learn

@@ -500,10 +500,10 @@ class VinDRMammoDataset(Dataset):
             img = self.cache.get_slot(index)
             # x will be None if the cache slot was empty or OOB
             if img is None:
-                img, _ = preprocess_breast(self.imgs_paths[index], self.target_size)
+                img = preprocess_breast(self.imgs_paths[index], self.target_size)
                 self.cache.set_slot(index, img, allow_overwrite=True)  # try to cache x
         else:
-            img, _ = preprocess_breast(self.imgs_paths[index], self.target_size)
+            img = preprocess_breast(self.imgs_paths[index], self.target_size)
 
         sample = {}
         sample["view"] = self.views[index]

@@ -16,11 +16,17 @@ The repository is divided in three main parts:
 
 ### Code dependencies
 The code is written in PyTorch, with PyTorch Lightning. 
-You can install all our dependencies using our conda enviromnent requirements file `environment_gpu.yml'. 
+You can install all our dependencies using our conda enviromnent requirements file `environment_gpu.yml`. 
 
 ### Datasets
 You will need to download the relevant datasets to run our code. 
-You can find the datasets at XXX, XXXX, XXX.
+All datasets are publicly available and be downloaded at:
+* PadChest [https://bimcv.cipf.es/bimcv-projects/padchest/](https://bimcv.cipf.es/bimcv-projects/padchest/), [https://www.sciencedirect.com/science/article/pii/S1361841520301614](https://www.sciencedirect.com/science/article/pii/S1361841520301614)
+* RSNA Pneumonia Detection Dataset: [https://www.kaggle.com/c/rsna-pneumonia-detection-challenge](https://www.kaggle.com/c/rsna-pneumonia-detection-challenge)
+* CheXpert [https://stanfordaimi.azurewebsites.net/datasets/8cbd9ed4-2eb9-4565-affc-111cf4f7ebe2](https://stanfordaimi.azurewebsites.net/datasets/8cbd9ed4-2eb9-4565-affc-111cf4f7ebe2)
+* EMBED [https://pubs.rsna.org/doi/full/10.1148/ryai.220047](https://pubs.rsna.org/doi/full/10.1148/ryai.220047), [https://github.com/Emory-HITI/EMBED_Open_Data/tree/main](https://github.com/Emory-HITI/EMBED_Open_Data/tree/main)
+* VinDR Mammo [https://vindr.ai/datasets/mammo](https://vindr.ai/datasets/mammo)
+
 Once you have downloaded the datasets, please update the corresponding paths at the top of the `mammo.py` and `xray.py` files.
 Additionally, for EMBED you will need to preprocess the original dataframes with our script `data_handling/csv_generation_code/generate_embed_csv.ipynb`. Similarly for RSNA please run first `data_handling/csv_generation_code/rsna_generate_full_csv.py`.
 

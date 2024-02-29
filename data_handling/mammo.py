@@ -378,7 +378,6 @@ class EmbedDataModule(BaseDataModuleClass):
             cache=True,
         )
 
-
     @property
     def num_classes(self) -> int:
         match self.config.data.label:
@@ -398,19 +397,15 @@ class EmbedOODDataModule(EmbedDataModule):
     We keep this as hold-out set distinct from pretraining domain
     for additional OOD evaluation.
     """
+
     def create_datasets(self):
         self.target_size = self.config.data.augmentations.resize
         full_df = get_embed_csv()
         df = full_df[full_df["SimpleModelLabel"] == 5]
         df = df.loc[df.FinalImageType == "2D"]
 
-        y = (
-            df.groupby("empi_anon")["tissueden"]
-            .unique()
-            .apply(lambda x: x[0])
-            .values
-        )
-        
+        y = df.groupby("empi_anon")["tissueden"].unique().apply(lambda x: x[0]).values
+
         train_val_id, test_id = train_test_split(
             df.empi_anon.unique(), test_size=0.25, random_state=33, stratify=y
         )
@@ -447,7 +442,7 @@ class EmbedOODDataModule(EmbedDataModule):
         print(df[df.empi_anon.isin(train_id)].tissueden.value_counts(normalize=True))
         print("Scanner in test df")
         print(df[df.empi_anon.isin(test_id)].tissueden.value_counts(normalize=True))
-        
+
         split_csv_dict = {
             "train": df.loc[df.empi_anon.isin(train_id)],
             "val": df.loc[df.empi_anon.isin(val_id)],
@@ -473,7 +468,7 @@ class EmbedOODDataModule(EmbedDataModule):
             parents=self.parents,
             cache=self.config.data.cache,
         )
-        
+
         self.dataset_test = EmbedDataset(
             df=split_csv_dict["test"],
             transform=self.val_tsfm,

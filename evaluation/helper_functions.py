@@ -112,4 +112,9 @@ def run_get_embeddings(dataloader, classification_model, max_batch=100):
     feats = np.concatenate(all_feats)
     if len(scanners) > 0:
         scanners = np.concatenate(scanners)
-    return {"targets": targets_true, "scanners": scanners, "feats": feats, 'paths': np.concatenate(paths)}
+    return {
+        "targets": targets_true,
+        "scanners": scanners,
+        "feats": feats,
+        "paths": np.concatenate(paths),
+    }

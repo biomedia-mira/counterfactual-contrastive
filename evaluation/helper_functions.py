@@ -86,12 +86,14 @@ def run_get_embeddings(dataloader, classification_model, max_batch=100):
     all_feats = []
     true_label = []
     scanners = []
+    paths = []
     with torch.no_grad():
         for i, batch in tqdm(enumerate(dataloader)):
             inputs = batch["x"].float()
             feats = classification_model.get_features(inputs.cuda()).cpu()
             all_feats.append(feats)
             true_label.append(batch["y"].numpy())
+            paths.append(batch["shortpath"])
             if "scanner" in batch.keys():
                 if isinstance(batch["scanner"], torch.Tensor):
                     scanners.append(batch["scanner"].numpy())
@@ -110,4 +112,4 @@ def run_get_embeddings(dataloader, classification_model, max_batch=100):
     feats = np.concatenate(all_feats)
     if len(scanners) > 0:
         scanners = np.concatenate(scanners)
-    return {"targets": targets_true, "scanners": scanners, "feats": feats}
+    return {"targets": targets_true, "scanners": scanners, "feats": feats, 'paths': np.concatenate(paths)}

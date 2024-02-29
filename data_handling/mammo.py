@@ -101,7 +101,6 @@ def get_embed_csv():
     mydf["SimpleModelLabel"] = mydf.ManufacturerModelName.apply(
         lambda x: modelname_map[x]
     )
-    mydf = mydf[mydf["SimpleModelLabel"] != 5]
     print(mydf.SimpleModelLabel.value_counts())
     mydf["ViewLabel"] = mydf.ViewPosition.apply(lambda x: 0 if x == "MLO" else 1)
 
@@ -274,7 +273,9 @@ class EmbedDataModule(BaseDataModuleClass):
                 df.empi_anon.unique(), test_size=0.25, random_state=33, stratify=y
             )
         else:
-            NotImplementedError
+            train_id, val_id = train_test_split(
+                df.empi_anon.unique(), test_size=0.25, random_state=33
+            )
 
         # 25% of patients - 600 for test
         test_id = val_id[600:]
@@ -335,7 +336,10 @@ class EmbedDataModule(BaseDataModuleClass):
         }
 
     def create_datasets(self) -> None:
-        self.full_df = get_embed_csv()
+        full_df = get_embed_csv()
+        # Keep senograph essential a hold-out set
+        self.full_df = full_df[full_df["SimpleModelLabel"] != 5]
+
         split_csv_dict = self.get_all_csv_from_config(
             orig_df=self.full_df,
             label=self.config.data.label,
@@ -374,6 +378,7 @@ class EmbedDataModule(BaseDataModuleClass):
             cache=True,
         )
 
+
     @property
     def num_classes(self) -> int:
         match self.config.data.label:
@@ -385,6 +390,98 @@ class EmbedDataModule(BaseDataModuleClass):
                 return 2
             case _:
                 raise ValueError
+
+
+class EmbedOODDataModule(EmbedDataModule):
+    """
+    Module to load the senograph essential domain from EMBED.
+    We keep this as hold-out set distinct from pretraining domain
+    for additional OOD evaluation.
+    """
+    def create_datasets(self):
+        self.target_size = self.config.data.augmentations.resize
+        full_df = get_embed_csv()
+        df = full_df[full_df["SimpleModelLabel"] == 5]
+        df = df.loc[df.FinalImageType == "2D"]
+
+        y = (
+            df.groupby("empi_anon")["tissueden"]
+            .unique()
+            .apply(lambda x: x[0])
+            .values
+        )
+        
+        train_val_id, test_id = train_test_split(
+            df.empi_anon.unique(), test_size=0.25, random_state=33, stratify=y
+        )
+
+        train_id, val_id = train_test_split(
+            df.empi_anon.unique(), test_size=0.10, random_state=33
+        )
+
+        print(
+            f"N patients train: {train_id.shape[0]}, val: {val_id.shape[0]}, test {test_id.shape[0]}"  # noqa
+        )
+
+        if self.config.data.prop_train < 1.0:
+            train_id = np.sort(train_id)
+            y = (
+                df.loc[df["empi_anon"].isin(train_id)]
+                .groupby("empi_anon")["SimpleModelLabel"]
+                .unique()
+                .apply(lambda x: x[0])
+                .sort_index()
+            )
+            assert y.index[0] == train_id[0]
+
+            train_id, _ = train_test_split(
+                train_id,
+                train_size=int(self.config.data.prop_train * train_id.shape[0]),
+                stratify=y.values,
+                random_state=self.config.seed,
+            )
+
+        print("train n images" + str(len(df.loc[df.empi_anon.isin(train_id)])))
+        print("test" + str(len(df.loc[df.empi_anon.isin(test_id)])))
+        print("val" + str(len(df.loc[df.empi_anon.isin(val_id)])))
+        print(df[df.empi_anon.isin(train_id)].tissueden.value_counts(normalize=True))
+        print("Scanner in test df")
+        print(df[df.empi_anon.isin(test_id)].tissueden.value_counts(normalize=True))
+        
+        split_csv_dict = {
+            "train": df.loc[df.empi_anon.isin(train_id)],
+            "val": df.loc[df.empi_anon.isin(val_id)],
+            "test": df.loc[df.empi_anon.isin(test_id)],
+        }
+
+        self.dataset_train = EmbedDataset(
+            df=split_csv_dict["train"],
+            transform=self.train_tsfm,
+            target_size=self.target_size,
+            label=self.config.data.label,
+            parents=self.parents,
+            cache=self.config.data.cache,
+            use_counterfactuals=self.config.data.use_counterfactuals,
+            counterfactual_contrastive_pairs=self.config.data.counterfactual_contrastive,
+        )
+
+        self.dataset_val = EmbedDataset(
+            df=split_csv_dict["val"],
+            transform=self.val_tsfm,
+            target_size=self.target_size,
+            label=self.config.data.label,
+            parents=self.parents,
+            cache=self.config.data.cache,
+        )
+        
+        self.dataset_test = EmbedDataset(
+            df=split_csv_dict["test"],
+            transform=self.val_tsfm,
+            target_size=self.target_size,
+            label=self.config.data.label,
+            parents=self.parents,
+            cache=True,
+        )
 
 
 def prepare_vindr_dataset():

@@ -6,7 +6,7 @@ defaults:
   - override /data: embed
 
 data:
-  batch_size: 312
+  batch_size: 296
   augmentations:
     random_crop: [.3, .90]
     random_rotation: 45
@@ -23,5 +23,4 @@ model:
 
 trainer:
   max_steps: None
-  num_epochs: 500
-  # lr: 2e-5 for finetuning is best
+  num_epochs: 450

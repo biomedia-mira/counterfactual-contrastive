@@ -419,20 +419,9 @@ class EmbedOODDataModule(EmbedDataModule):
         )
 
         if self.config.data.prop_train < 1.0:
-            train_id = np.sort(train_id)
-            y = (
-                df.loc[df["empi_anon"].isin(train_id)]
-                .groupby("empi_anon")["SimpleModelLabel"]
-                .unique()
-                .apply(lambda x: x[0])
-                .sort_index()
-            )
-            assert y.index[0] == train_id[0]
-
             train_id, _ = train_test_split(
                 train_id,
                 train_size=int(self.config.data.prop_train * train_id.shape[0]),
-                stratify=y.values,
                 random_state=self.config.seed,
             )
 

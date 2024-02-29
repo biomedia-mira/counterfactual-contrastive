@@ -11,7 +11,7 @@ from causal_models.utils import linear_warmup, seed_worker
 from hydra import compose, initialize
 
 from data_handling.mammo import EmbedDataModule
-from data_handling.padchest import PadChestDataModule
+from data_handling.xray import PadChestDataModule
 
 
 def setup_dataloaders(args, cache: bool = True, shuffle_train=True):

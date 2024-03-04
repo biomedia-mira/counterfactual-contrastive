@@ -1,0 +1,18 @@
+defaults:
+  - base.yaml
+  - _self_
+_target_: data_handling.mammo.VinDrDataModule
+dataset: vindr
+batch_size: 12
+num_workers: 12
+augmentations:
+  resize: [256, 192]
+  horizontal_flip: False
+  center_crop: [224, 224]
+input_channels: 1
+
+weights: [170., 10., 1., 8.] # breast density
+domain: None
+cache: True
+use_counterfactuals: False
+counterfactual_contrastive: True

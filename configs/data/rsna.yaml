@@ -1,0 +1,13 @@
+defaults:
+  - base.yaml
+
+_target_: data_handling.xray.RSNAPneumoniaDataModule
+dataset: "rsna"
+
+augmentations:
+  resize: [224, 224]
+  horizontal_flip: False
+input_channels: 1
+use_counterfactuals: False
+counterfactual_contrastive: True
+cache: True

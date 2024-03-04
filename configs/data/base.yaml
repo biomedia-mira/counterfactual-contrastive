@@ -1,0 +1,16 @@
+batch_size: 128
+num_workers: 8
+pin_memory: True
+input_channels: 3
+weights: None
+augmentations:
+    resize: None
+    center_crop: None
+    random_rotation: 0
+    horizontal_flip: False
+    vertical_flip: False
+    random_crop: None
+    random_color_jitter: 0.1
+    random_erase_scale: [0., 0.]
+    sharp: 0.
+prop_train: 1.

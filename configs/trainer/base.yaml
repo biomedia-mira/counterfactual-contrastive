@@ -1,0 +1,16 @@
+name: base
+lr: 1e-3
+num_epochs: 400
+patience_for_scheduler: 10
+metric_to_monitor: "Val/loss"
+metric_to_monitor_mode: "min"
+val_check_interval: None
+weight_decay: 0.0
+use_train_augmentations: True
+loss: "ce"
+contrastive_temperature: 0.1
+return_two_views: False
+finetune_path: None
+device: [0]
+max_steps: None
+freeze_encoder: False

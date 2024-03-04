@@ -1,0 +1,16 @@
+defaults:
+  - base.yaml
+  - _self_
+_target_: data_handling.xray.CheXpertDataModule
+dataset: chexpert
+batch_size: 24
+num_workers: 12
+augmentations:
+  resize: [224, 224]
+  horizontal_flip: False
+input_channels: 1
+label: Pneumonia
+weights: [1.05, 20.]
+cache: True
+use_counterfactuals: False
+counterfactual_contrastive: True

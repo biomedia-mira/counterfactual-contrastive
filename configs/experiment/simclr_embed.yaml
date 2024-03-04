@@ -1,0 +1,26 @@
+# @package _global_
+
+
+defaults:
+  - override /trainer: simclr
+  - override /data: embed
+
+data:
+  batch_size: 296
+  augmentations:
+    random_crop: [.3, .90]
+    random_rotation: 45
+    random_color_jitter: .4
+    horizontal_flip: True
+    vertical_flip: True
+    random_erase_scale: [.05, .10]
+    sharp: 1.
+    center_crop: [224, 192]
+
+model:
+  encoder_name: "resnet50"
+  pretrained: True
+
+trainer:
+  max_steps: None
+  num_epochs: 450

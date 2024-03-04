@@ -1,0 +1,2 @@
+encoder_name: "resnet18"
+pretrained: False

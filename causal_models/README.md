@@ -6,7 +6,7 @@ The code in this folder is adapted from the official code associated with the
 ## Train the counterfactual inference model
 
 To train the counterfactual inference models in the paper you can simply run
-`python causal_models/main.py --hps embed` replace by `padchest` if you want to train on chest x-rays. All associated hyperparameters are stored in `causal_models/hps.py`. 
+`python causal_models/main.py --hps embed --exp_name your_exp_name` replace by `padchest` if you want to train on chest x-rays. All associated hyperparameters are stored in `causal_models/hps.py`. 
 
 This assumes you have already set up your data folders as per the main repository.
 

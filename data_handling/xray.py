@@ -276,9 +276,14 @@ class PadChestDataset(Dataset):
             ).detach()
 
         if self.use_counterfactuals:
-            cfx = self.load_counterfactual_image(idx)
-            if not self.counterfactual_contrastive_pairs:
-                img = cfx.clone()
+            if self.counterfactual_contrastive_pairs:
+                cfx = self.load_counterfactual_image(idx)
+            else:
+                if torch.rand(1).item() > 0.5:
+                    cfx = self.load_counterfactual_image(idx)
+                    img = cfx.clone()
+                else:
+                    cfx = img.clone()
             img = self.transform(img)
             cfx = self.transform(cfx)
             img = torch.stack([img, cfx], dim=0).float()

@@ -69,7 +69,7 @@ class ClassificationModule(pl.LightningModule):
         self.automatic_optimization = loss not in ["simclr"]
 
     def common_step(self, batch: BatchType, prefix: str, batch_idx: int) -> Any:  # type: ignore
-        data, target = batch["x"], batch["y"]
+        data, target = batch["x"], batch["y"].float()
         if data.ndim == 5:
             bsz, n_views, c, w, h = data.shape
             data = data.reshape((-1, c, w, h))
@@ -97,7 +97,7 @@ class ClassificationModule(pl.LightningModule):
             output = self.model.classify_features(features.detach())
 
             if n_views > 1:
-                target = torch.stack([target, target], dim=1).reshape(-1)
+                target = torch.stack([target]*n_views, dim=1).reshape((bsz*n_views, -1))
 
             if self.training:
                 # Optimizer for model encoder
@@ -118,7 +118,7 @@ class ClassificationModule(pl.LightningModule):
         else:
             output = self.model(data)
             if n_views > 1:
-                target = torch.stack([target, target], dim=1).reshape(-1)
+                target = torch.stack([target]*n_views, dim=1).reshape((bsz*n_views, -1))
             loss = self.criterion(output, target)
 
         self.log(f"{prefix}/loss", loss, sync_dist=True)
@@ -177,10 +177,11 @@ class ClassificationModule(pl.LightningModule):
                 )
         except ValueError:
             pass
-        self.log(f"{prefix}/Accuracy", accuracy_score(targets, preds), sync_dist=True)
+        amax_targets = torch.argmax(targets, 1)
+        self.log(f"{prefix}/Accuracy", accuracy_score(amax_targets, preds), sync_dist=True)
         self.log(
             f"{prefix}/BalAccuracy",
-            balanced_accuracy_score(targets, preds),
+            balanced_accuracy_score(amax_targets, preds),
             sync_dist=True,
         )
 

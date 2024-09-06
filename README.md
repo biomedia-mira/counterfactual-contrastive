@@ -1,4 +1,4 @@
-# CF-SimCLR: counterfactual contrastive learning
+# Counterfactual contrastive learning: robust representations via causal image synthesis
 
 This repository contains the code for the paper "Counterfactual contrastive learning: robust representations via causal image synthesis". <br>
 [Link to paper](https://arxiv.org/abs/2403.09605).

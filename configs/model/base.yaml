@@ -1,2 +1,4 @@
 encoder_name: "resnet18"
 pretrained: False
+pretrained_encoder_path: None
+patch_size: 16

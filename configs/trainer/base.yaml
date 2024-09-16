@@ -14,3 +14,5 @@ finetune_path: None
 device: [0]
 max_steps: None
 freeze_encoder: False
+warmup_epochs: 0
+initial_tau: 0.995

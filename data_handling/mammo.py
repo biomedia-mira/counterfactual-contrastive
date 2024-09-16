@@ -13,12 +13,20 @@ from data_handling.base import BaseDataModuleClass
 from data_handling.caching import SharedCache
 from torchvision.transforms import Resize
 
+import os
 
-EMBED_ROOT = (
-    "/data2/mb121/EMBED"
-    if Path("/data2/mb121/EMBED").exists()
-    else "/vol/biomedic3/data/EMBED"
-)
+cluster_root = os.getenv("HOME", None)
+
+if Path("/data2/mb121/EMBED").exists():
+    EMBED_ROOT = "/data2/mb121/EMBED"
+if Path("/data/EMBED").exists():
+    EMBED_ROOT = "/data/EMBED"
+elif cluster_root is not None and (Path(cluster_root) / "EMBED").exists():
+    EMBED_ROOT = Path(cluster_root) / "EMBED"
+else:
+    EMBED_ROOT = "/vol/biomedic3/data/EMBED"
+
+
 VINDR_MAMMO_DIR = Path("/vol/biomedic3/data/VinDR-Mammo")
 
 domain_maps = {
@@ -240,7 +248,9 @@ class EmbedDataset(Dataset):
             np.random.choice([a for a in range(5) if a != self.scanner[index]], size=1)
         )
 
-        cf_dir1 = Path("/data2/mb121/EMBED/embed_cf/cf_beta1balanced_scanner")
+        cf_dir1 = Path(
+            "/vol/biomedic3/mb121/causal-contrastive/cf_beta1balanced_scanner"
+        )
 
         filename = cf_dir1 / f"{short_path}_s{s}.png"
 

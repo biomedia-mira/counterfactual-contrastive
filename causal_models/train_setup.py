@@ -47,7 +47,7 @@ def setup_dataloaders(args, cache: bool = True, shuffle_train=True):
                     "data=embed",
                     "data.batch_size=16",
                     f"data.cache={cache}",
-                    f"data.exclude_cviews={not 'cview' in args.parents_x}",
+                    f"data.exclude_cviews={'cview' not in args.parents_x}",
                 ],
             )
             print(cfg)

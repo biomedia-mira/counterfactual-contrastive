@@ -1,6 +1,6 @@
 defaults:
   - _self_
-  - data: cifar10
+  - data: embed
   - trainer: base
   - model: base
   - experiment: base

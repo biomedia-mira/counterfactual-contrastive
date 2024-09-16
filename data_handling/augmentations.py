@@ -84,3 +84,165 @@ def get_augmentations_from_config(config: DictConfig) -> Tuple[Callable, Callabl
         val_transforms.append(tf.CenterCrop(config.augmentations.center_crop))
 
     return tf.Compose(transform_list), tf.Compose(val_transforms)
+
+
+class GaussianBlur(tf.RandomApply):
+    """
+    Apply Gaussian Blur to the PIL image.
+    """
+
+    def __init__(
+        self, *, p: float = 0.5, radius_min: float = 0.1, radius_max: float = 0.7
+    ):
+        # NOTE: torchvision is applying 1 - probability to return the original image
+        keep_p = 1 - p
+        transform = tf.GaussianBlur(kernel_size=9, sigma=(radius_min, radius_max))
+        super().__init__(transforms=[transform], p=keep_p)
+
+
+class NoEmptyCrop:
+    def __init__(self, base_tsfm):
+        self.base_tsfm = base_tsfm
+
+    def __call__(self, x):
+        xt = self.base_tsfm(x)
+        if x.min() == x.max():
+            print("skipping, empty image")
+            return xt
+        while xt.min() == xt.max():
+            xt = self.base_tsfm(x)
+        return xt
+
+
+class DataAugmentationDINO(object):
+    def __init__(
+        self,
+        global_crops_scale,
+        local_crops_scale,
+        local_crops_number,
+        global_crops_size=224,
+        local_crops_size=96,
+        base_tsfm=None,
+        use_counterfactuals: bool = False,
+    ):
+        self.global_crops_scale = global_crops_scale
+        self.local_crops_scale = local_crops_scale
+        self.local_crops_number = local_crops_number
+        self.global_crops_size = global_crops_size
+        self.local_crops_size = local_crops_size
+        self.base_tsfm = base_tsfm
+
+        # random resized crop and flip
+        self.geometric_augmentation_global = tf.Compose(
+            [
+                tf.RandomResizedCrop(
+                    global_crops_size,
+                    scale=global_crops_scale,
+                    interpolation=tf.InterpolationMode.BICUBIC,
+                    antialias=True,
+                ),
+                tf.RandomHorizontalFlip(p=0.5),
+            ]
+        )
+
+        self.geometric_augmentation_local = tf.Compose(
+            [
+                tf.RandomResizedCrop(
+                    local_crops_size,
+                    scale=local_crops_scale,
+                    interpolation=tf.InterpolationMode.BICUBIC,
+                    antialias=True,
+                ),
+                tf.RandomHorizontalFlip(p=0.5),
+            ]
+        )
+
+        self.geometric_augmentation_local = NoEmptyCrop(
+            self.geometric_augmentation_local
+        )
+
+        # color distorsions / blurring
+        color_jittering = tf.Compose(
+            [
+                tf.RandomApply(
+                    [
+                        tf.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.2)
+                    ],  # no hue for B&W
+                    p=0.8,
+                ),
+            ]
+        )
+
+        global_transfo1_extra = GaussianBlur(p=1.0)
+
+        global_transfo2_extra = tf.Compose(
+            [
+                GaussianBlur(p=0.1),
+            ]
+        )
+
+        local_transfo_extra = GaussianBlur(p=0.5)
+
+        # normalization
+        self.normalize = tf.Compose(
+            [
+                tf.ToTensor(),
+                # make_normalize_transform(), not needed for my datasets
+            ]
+        )
+
+        self.global_transfo1 = tf.Compose([color_jittering, global_transfo1_extra])
+        self.global_transfo2 = tf.Compose([color_jittering, global_transfo2_extra])
+        self.local_transfo = tf.Compose([color_jittering, local_transfo_extra])
+        self.use_counterfactuals = use_counterfactuals
+
+    def __call__(self, image):
+        output = {}
+
+        # global crops:
+        if self.use_counterfactuals:
+            im1_base = self.geometric_augmentation_global(image[0])
+            im2_base = self.geometric_augmentation_global(image[1])
+        else:
+            im1_base = self.geometric_augmentation_global(image)
+            im2_base = self.geometric_augmentation_global(image)
+
+        # To make sure that both global transformation are applied
+        # with the same proba to both real and counterfactual images.
+        if torch.rand(1).item() > 0.5:
+            global_crop_1 = self.global_transfo1(im1_base)
+            global_crop_2 = self.global_transfo2(im2_base)
+        else:
+            global_crop_1 = self.global_transfo2(im1_base)
+            global_crop_2 = self.global_transfo1(im2_base)
+
+        output["global_crops"] = [global_crop_1, global_crop_2]
+
+        # global crops for teacher:
+        output["global_crops_teacher"] = [global_crop_1, global_crop_2]
+
+        # local crops:
+        if self.use_counterfactuals:
+            local_crops = [
+                self.local_transfo(self.geometric_augmentation_local(image[0]))
+                for _ in range(self.local_crops_number // 2)
+            ] + [
+                self.local_transfo(self.geometric_augmentation_local(image[1]))
+                for _ in range(self.local_crops_number // 2)
+            ]
+        else:
+            local_crops = [
+                self.local_transfo(self.geometric_augmentation_local(image))
+                for _ in range(self.local_crops_number)
+            ]
+        # here we could have half from counterfactual image and half from the original one?
+        # typically this is like 8 in the dino config
+        output["local_crops"] = local_crops
+        output["offsets"] = ()
+
+        if self.base_tsfm is not None:
+            output["x"] = self.base_tsfm(image)
+        else:
+            output["x"] = image
+
+        return output

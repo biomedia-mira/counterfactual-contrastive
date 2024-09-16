@@ -30,6 +30,8 @@ def main(args):
                 ckpt_args["data_dir"] = args.data_dir
             if args.lr < ckpt_args["lr"]:
                 ckpt_args["lr"] = args.lr
+            if args.epochs > ckpt_args["epochs"]:
+                ckpt_args["epochs"] = args.epochs
             vars(args).update(ckpt_args)
         else:
             print(f"Checkpoint not found at: {args.resume}")

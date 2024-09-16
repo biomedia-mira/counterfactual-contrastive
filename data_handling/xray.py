@@ -10,9 +10,9 @@ from skimage import io
 from torchvision.transforms import ToTensor, Resize, CenterCrop
 from data_handling.base import BaseDataModuleClass
 from datetime import datetime
-
+import os
 from data_handling.caching import SharedCache
-
+from data_handling.augmentations import DataAugmentationDINO
 
 # Please update this with your own paths.
 DATA_DIR_RSNA = Path("/vol/biomedic3/mb121/rsna-pneumonia-detection-challenge")
@@ -21,8 +21,17 @@ PATH_TO_PNEUMONIA_WITH_METADATA_CSV = (
     Path(__file__).parent / "pneumonia_dataset_with_metadata.csv"
 )
 
-PADCHEST_ROOT = Path("/vol/biodata/data/chest_xray/BIMCV-PADCHEST")
-PADCHEST_IMAGES = PADCHEST_ROOT / "images"
+cluster_root = os.getenv("HOME", None)
+
+if Path("/data2/PadChest").exists():
+    PADCHEST_ROOT = Path("/data2/PadChest")
+    PADCHEST_IMAGES = PADCHEST_ROOT / "preprocessed"
+elif (Path(cluster_root) / "PadChest").exists():
+    PADCHEST_ROOT = Path(cluster_root) / "PadChest"
+    PADCHEST_IMAGES = PADCHEST_ROOT / "preprocessed"
+else:
+    PADCHEST_ROOT = Path("/vol/biodata/data/chest_xray/BIMCV-PADCHEST")
+    PADCHEST_IMAGES = PADCHEST_ROOT / "images"
 
 
 def prepare_padchest_csv():
@@ -97,7 +106,7 @@ class PadChestDataModule(BaseDataModuleClass):
         )
 
         if self.config.data.prop_train < 1.0:
-            rng = np.random.default_rng(33)
+            rng = np.random.default_rng(self.config.seed)
             train_id = rng.choice(
                 train_id,
                 size=int(self.config.data.prop_train * train_id.shape[0]),
@@ -126,7 +135,7 @@ class PadChestDataModule(BaseDataModuleClass):
             df=df.loc[df.PatientID.isin(test_id)],
             transform=self.val_tsfm,
             label_column=label_col,
-            cache=self.config.data.cache,
+            cache=True,
         )
 
     @property
@@ -157,7 +166,7 @@ class CheXpertDataModule(BaseDataModuleClass):
         )
 
         if self.config.data.prop_train < 1.0:
-            rng = np.random.default_rng(33)
+            rng = np.random.default_rng(self.config.seed)
             train_id = rng.choice(
                 train_id,
                 size=int(self.config.data.prop_train * train_id.shape[0]),
@@ -181,7 +190,7 @@ class CheXpertDataModule(BaseDataModuleClass):
         self.dataset_test = CheXpertDataset(
             df=df.loc[df.PatientID.isin(test_id)],
             transform=self.val_tsfm,
-            cache=self.config.data.cache,
+            cache=True,
             label_col=label_col,
         )
 
@@ -245,7 +254,7 @@ class PadChestDataset(Dataset):
             ImageFile.LOAD_TRUNCATED_IMAGES = False
         img = img / (img.max() + 1e-12)
         img = CenterCrop(224)(Resize(224, antialias=True)(ToTensor()(img)))
-        return img
+        return img.float()
 
     def __getitem__(self, idx: int) -> Dict:
         if self.cache is not None:
@@ -275,27 +284,46 @@ class PadChestDataset(Dataset):
                 ]
             ).detach()
 
-        if self.use_counterfactuals:
-            if self.counterfactual_contrastive_pairs:
-                cfx = self.load_counterfactual_image(idx)
-            else:
-                if torch.rand(1).item() > 0.5:
-                    cfx = self.load_counterfactual_image(idx)
-                    img = cfx.clone()
+        if isinstance(self.transform, DataAugmentationDINO):
+            if self.use_counterfactuals:
+                if self.counterfactual_contrastive_pairs:
+                    # Sample domain if same as real then use real
+                    cfx = (
+                        self.load_counterfactual_image(idx)
+                        if torch.rand(1).item() > 0.5
+                        else img.clone()
+                    )
                 else:
-                    cfx = img.clone()
-            img = self.transform(img)
-            cfx = self.transform(cfx)
-            img = torch.stack([img, cfx], dim=0).float()
+                    if torch.rand(1).item() > 0.5:
+                        cfx = self.load_counterfactual_image(idx)
+                        img = cfx.clone()
+                    else:
+                        cfx = img.clone()
+                img = torch.stack([img, cfx], dim=0)
+            img = self.transform(img.float())
+            sample.update(img)
         else:
-            img = self.transform(img).float()
+            if self.use_counterfactuals:
+                if self.counterfactual_contrastive_pairs:
+                    cfx = self.load_counterfactual_image(idx)
+                else:
+                    if torch.rand(1).item() > 0.5:
+                        cfx = self.load_counterfactual_image(idx)
+                        img = cfx.clone()
+                    else:
+                        cfx = img.clone()
+                img = self.transform(img)
+                cfx = self.transform(cfx)
+                img = torch.stack([img, cfx], dim=0)
+            else:
+                img = self.transform(img)
 
-        sample["x"] = img
+            sample["x"] = img.float()
 
         return sample
 
     def load_counterfactual_image(self, idx):
-        cf_dir = Path("padchest_cf_images_v0")
+        cf_dir = Path("/vol/biomedic3/mb121/causal-contrastive/padchest_cf_images_v0")
         short_path = self.img_paths[idx][:-4]
         filename = cf_dir / f"{short_path}_sc_cf.png"
         img = io.imread(str(filename), as_gray=True) / 255.0
@@ -349,7 +377,7 @@ class CheXpertDataset(Dataset):
             img = self.cache.get_slot(idx)
             if img is None:
                 img = self.read_image(idx)
-                self.cache.set_slot(idx, img, allow_overwrite=False)
+                self.cache.set_slot(idx, img, allow_overwrite=True)
         else:
             img = self.read_image(idx)
 
@@ -395,7 +423,6 @@ class RNSAPneumoniaDetectionDataset(Dataset):
             for subject_id in self.subject_ids
         ]
         self.genders = self.df["Patient Gender"].values
-        self.genders = [0 if g == 0 else 1 for g in self.genders]
         self.ages = self.df["Patient Age"].values.astype(int)
         if cache:
             self.cache = SharedCache(
@@ -536,7 +563,7 @@ class RSNAPneumoniaDataModule(BaseDataModuleClass):
             df=test_df,
             transform=self.val_tsfm,
             parents=self.parents,
-            cache=self.config.data.cache,
+            cache=True,
         )
 
         print("#train: ", len(self.dataset_train))

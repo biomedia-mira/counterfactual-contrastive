@@ -20,6 +20,6 @@ model:
 trainer:
   patience_for_scheduler: 25
   metric_to_monitor: "Val/AUROC"
-  metric_to_monitor_mode: "max"
-  lr: 1e-5
+  metric_to_monitor_mode: "max" 
+  lr: 1e-4 # 2e-5 for finetuning
   val_check_interval: 1000

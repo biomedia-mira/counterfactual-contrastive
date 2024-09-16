@@ -1,6 +1,9 @@
+from __future__ import print_function
 import math
 
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 
 class SyncFunction(torch.autograd.Function):
@@ -63,3 +66,11 @@ def nt_xent_loss(out_1, out_2, temperature=0.1, eps=1e-6):
     pos = torch.cat([pos, pos], dim=0)
 
     return -torch.log(pos / (neg + eps)).mean()
+
+
+class CosineLoss(nn.Module):
+    def forward(self, a: torch.Tensor, b: torch.Tensor) -> torch.Tensor:
+        a = F.normalize(a, dim=-1)
+        b = F.normalize(b, dim=-1)
+        neg_cos_sim = -(a * b).sum(dim=-1).mean()
+        return neg_cos_sim

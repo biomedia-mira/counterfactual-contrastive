@@ -32,6 +32,14 @@ def extract_pretraining_type(run_name):
     run_name = re.split(r"-", run_name, maxsplit=1)[0]
     if "simclrcfaug" in run_name:
         return "SimCLR with CF\nin training set"
+    if "dinocfaug" in run_name:
+        return "DINO+"
+    if "dinocf" in run_name:
+        return "CF-DINO"
+    if "dino" in run_name:
+        return "DINO"
+    if "simclrsexcf" in run_name:
+        return "SexCF-SimCLR"
     if "simclrcf" in run_name:
         return "CF-SimCLR"
     elif "simclr" in run_name:
@@ -56,6 +64,7 @@ def run_inference(dataloader, classification_model):
     confs = []
     true_label = []
     scanners = []
+    sexs = []
     with torch.no_grad():
         for i, batch in tqdm(enumerate(dataloader)):
             inputs = batch["x"].float()
@@ -68,7 +77,14 @@ def run_inference(dataloader, classification_model):
                     scanners.append(batch["scanner"].numpy())
                 else:
                     scanners.append(batch["scanner"])
-
+            if "sex" in batch.keys():
+                if isinstance(batch["sex"], torch.Tensor):
+                    sexs.append(batch["sex"].numpy())
+                else:
+                    sexs.append(batch["sex"])
+    if len(sexs) > 0:
+        sexs = np.concatenate(sexs)
+    print(sexs)
     targets_true = np.concatenate(true_label)
     if targets_true.ndim == 2:
         if targets_true.shape[1] == 1:
@@ -79,7 +95,7 @@ def run_inference(dataloader, classification_model):
     confs = np.concatenate(confs)
     if len(scanners) > 0:
         scanners = np.concatenate(scanners)
-    return {"confs": confs, "targets": targets_true, "scanners": scanners}
+    return {"confs": confs, "targets": targets_true, "scanners": scanners, "sexs": sexs}
 
 
 def run_get_embeddings(dataloader, classification_model, max_batch=100):

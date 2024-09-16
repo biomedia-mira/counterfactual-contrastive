@@ -3,18 +3,19 @@ channels:
   - nvidia
   - default
 dependencies:
-  - python=3.11
-  - pytorch
-  - torchvision
+  - python=3.11.5
+  - pytorch==2.1.1
+  - torchvision==0.16.1
   - pytorch-cuda=12.1
   - pip
   - pip:
-    - lightning>=2.2.0
+    - lightning==2.2.0.post0
+    - lightning-utilities==0.10.0
     - pandas
     - numpy
     - scikit-learn
     - hydra-core
-    - wandb
+    - wandb==0.16.0
     - jupyter
     - flake8
     - black
@@ -27,3 +28,6 @@ dependencies:
     - opencv-python
     - tensorboard
     - scikit-image
+    - torchmetrics==1.2.0
+    - timm==0.9.16
+    - xformers==0.0.23

@@ -1,10 +1,11 @@
 joined_simple.csv
+lightning_logs/
 *.sh
 *.png
 *.pdf
 *.eps
 embed_cf/
-
+outputs2/
 outputs
 znew_scripts
 padchest_cf_images_v0

@@ -1,7 +1,8 @@
-# Counterfactual contrastive learning: robust representations via causal image synthesis
+# Robust representations for image classification via counterfactual contrastive learning
 
-This repository contains the code for the paper "Counterfactual contrastive learning: robust representations via causal image synthesis". <br>
-[Link to paper](https://arxiv.org/abs/2403.09605).
+This repository contains the code for the papers "Counterfactual contrastive learning: robust representations via causal image synthesis" and extended version "Robust representations for image classification via counterfactual contrastive learning". <br>
+[Link to Data Engineering Workshop @ MICCAI 2024 paper](https://arxiv.org/abs/2403.09605).
+[Link to extension (pre-print)]()
 
 ![alt text](figure1.png)
 
@@ -64,4 +65,4 @@ python classification/train.py experiment=base_density trainer.finetune_path=PAT
 ```
 You can choose the proportion of labelled data to use for finetuning with the flag `data.prop_train=1.0`
 
-5. Evaluate on the test set by running the notebook `evaluation/embed_density.ipynb` to run and save inference results on the test set. 
+5. Evaluate on the test set by running the inference code `evaluation/simclr_embed.py` to run and save inference results on the test set. 

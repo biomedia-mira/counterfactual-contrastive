@@ -1,0 +1,30 @@
+# @package _global_
+
+
+defaults:
+  - override /trainer: dino
+  - override /data: padchest
+
+data:
+  batch_size: 60
+  augmentations:
+    random_crop: None
+    random_rotation: 5
+    random_color_jitter: 0.
+    horizontal_flip: False
+    vertical_flip: False
+    center_crop: [224, 224]
+
+model:
+  encoder_name: "dino_vit_base"
+  patch_size: 16
+
+trainer:
+  crops:
+    global_crops_scale: [0.15, 1.0]
+    local_crops_number: 8
+    local_crops_scale: [0.05, 0.15]
+    local_crops_size: [96, 96]
+  num_epochs: 300
+  koleo_loss_weight: 0.1
+  ibot_loss_weight: 1.0

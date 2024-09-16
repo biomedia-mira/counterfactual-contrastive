@@ -4,7 +4,7 @@ defaults:
   - override /data: chexpert
 
 data:
-  batch_size: 112
+  batch_size: 64
   augmentations:
     random_crop: [.7, 1.]
     random_rotation: 20
@@ -17,7 +17,7 @@ model:
   pretrained: True
   
 trainer:
-  patience_for_scheduler: 10
+  patience_for_scheduler: 25
   metric_to_monitor: "Val/AUROC"
   metric_to_monitor_mode: "max"
   lr: 1e-4

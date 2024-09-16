@@ -1,0 +1,8 @@
+defaults:
+  - base.yaml
+  - _self_
+name: simclr
+loss: "simclr"
+contrastive_temperature: 0.1
+return_two_views: True
+num_epochs: 450

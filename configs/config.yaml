@@ -1,0 +1,11 @@
+defaults:
+  - _self_
+  - data: embed
+  - trainer: base
+  - model: base
+  - experiment: base
+
+project_name: causal_contrastive_extended
+seed: 11
+mixed_precision: False
+is_unit_test_config: False

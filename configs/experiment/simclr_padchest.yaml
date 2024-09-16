@@ -1,0 +1,25 @@
+# @package _global_
+
+
+defaults:
+  - override /trainer: simclr
+  - override /data: padchest
+
+data:
+  batch_size: 256
+  augmentations:
+    random_crop: [.3, .99]
+    random_rotation: 90
+    random_color_jitter: .4
+    horizontal_flip: True
+    vertical_flip: True
+    random_erase_scale: [.05, .30]
+    sharp: 1.
+
+model:
+  encoder_name: "resnet50"
+  pretrained: True
+
+trainer:
+  max_steps: None
+  max_epochs: 500

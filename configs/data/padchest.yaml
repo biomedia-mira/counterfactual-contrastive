@@ -1,0 +1,16 @@
+defaults:
+  - base.yaml
+  - _self_
+_target_: data_handling.xray.PadChestDataModule
+dataset: padchest
+batch_size: 16
+num_workers: 14
+augmentations:
+  resize: [224, 224]
+  horizontal_flip: False
+input_channels: 1
+label: pneumonia
+weights: [1., 10.]
+cache: True
+use_counterfactuals: False
+counterfactual_contrastive: True

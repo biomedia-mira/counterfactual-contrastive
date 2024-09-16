@@ -1,0 +1,33 @@
+channels:
+  - pytorch
+  - nvidia
+  - default
+dependencies:
+  - python=3.11.5
+  - pytorch==2.1.1
+  - torchvision==0.16.1
+  - pytorch-cuda=12.1
+  - pip
+  - pip:
+    - lightning==2.2.0.post0
+    - lightning-utilities==0.10.0
+    - pandas
+    - numpy
+    - scikit-learn
+    - hydra-core
+    - wandb==0.16.0
+    - jupyter
+    - flake8
+    - black
+    - matplotlib
+    - seaborn
+    - pytest
+    - pyro_ppl==1.8.4
+    - Send2Trash==1.8.2
+    - imageio==2.26.0
+    - opencv-python
+    - tensorboard
+    - scikit-image
+    - torchmetrics==1.2.0
+    - timm==0.9.16
+    - xformers==0.0.23

@@ -1,8 +1,8 @@
 # Robust representations for image classification via counterfactual contrastive learning
 
 This repository contains the code for the papers "Counterfactual contrastive learning: robust representations via causal image synthesis" and extended version "Robust representations for image classification via counterfactual contrastive learning". <br>
-[Link to Data Engineering Workshop @ MICCAI 2024 paper](https://arxiv.org/abs/2403.09605).
-[Link to extension (pre-print)]()
+[Link to paper accepted to Data Engineering Workshop @ MICCAI 2024](https://arxiv.org/abs/2403.09605).
+[Link to extended version (pre-print)]()
 
 ![alt text](figure1.png)
 

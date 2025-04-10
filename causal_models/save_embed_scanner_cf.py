@@ -6,13 +6,8 @@ import numpy as np
 from causal_models.trainer import preprocess_batch
 
 from torchvision.transforms import CenterCrop
-from causal_models.hps import Hparams
-from causal_models.hvae import HVAE2
-from causal_models.train_setup import (
-    setup_dataloaders,
-    load_finetuned_vae,
-    load_vae_and_module,
-)
+from causal_models.train_setup import setup_dataloaders, load_vae_and_module
+
 
 if __name__ == "__main__":
     import argparse

@@ -84,7 +84,6 @@ class CounterfactualTrainingModule(pl.LightningModule):
         cf_x = torch.clamp(cf_loc + cf_scale * u, min=-1, max=1)
 
         cf_x = (cf_x + 1) / 2
-        real_x = (batch["x"] + 1) / 2
 
         predicted_intervened = self.model_dict["scanner"](cf_x)
         real_intervened = torch.argmax(cf_pa["scanner"], 1)
@@ -159,13 +158,9 @@ class CounterfactualTrainingModule(pl.LightningModule):
 
 if __name__ == "__main__":
     from pathlib import Path
-    import torch
     from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
-    from pytorch_lightning.callbacks.early_stopping import EarlyStopping
     from pytorch_lightning.loggers import WandbLogger
     from pytorch_lightning import seed_everything
-    from causal_models.train_setup import load_vae_and_module
-    from classification.load_model_and_config import get_modules
 
     model_path = "/vol/biomedic3/mb121/causal-contrastive/outputs/scanner/beta1balanced/last_19.pt"
 

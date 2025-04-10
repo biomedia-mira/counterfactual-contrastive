@@ -81,7 +81,7 @@ def prepare_padchest_csv():
         "216840111366964013590140476722013043111952381_02-065-198.png",
         "216840111366964012819207061112010281134410801_00-129-131.png",
         "216840111366964013686042548532013208193054515_02-026-007.png",
-        "216840111366964012989926673512011083134050913_00-168-009.png"
+        "216840111366964012989926673512011083134050913_00-168-009.png",
         # '216840111366964013590140476722013058110301622_02-056-111.png'
     ]
     df = df.loc[~df.ImageID.isin(invalid_filenames)]
@@ -277,9 +277,11 @@ class PadChestDataset(Dataset):
         if self.parents is not None:
             sample["pa"] = torch.cat(
                 [
-                    sample[c]
-                    if isinstance(sample[c], torch.Tensor)
-                    else torch.tensor([sample[c]])
+                    (
+                        sample[c]
+                        if isinstance(sample[c], torch.Tensor)
+                        else torch.tensor([sample[c]])
+                    )
                     for c in self.parents
                 ]
             ).detach()
@@ -454,9 +456,11 @@ class RNSAPneumoniaDetectionDataset(Dataset):
         if self.parents is not None:
             sample["pa"] = torch.cat(
                 [
-                    sample[c]
-                    if isinstance(sample[c], torch.Tensor)
-                    else torch.tensor([sample[c]])
+                    (
+                        sample[c]
+                        if isinstance(sample[c], torch.Tensor)
+                        else torch.tensor([sample[c]])
+                    )
                     for c in self.parents
                 ]
             ).detach()

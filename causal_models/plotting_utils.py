@@ -30,8 +30,6 @@ def plot_cxr_grid(x, fig=None, ax=None, nrows=1, cmap="Greys_r", norm=None, cbar
             _x = x[i * n + j].squeeze()
             if _x.shape[0] == 3:
                 _x = np.transpose(_x, [1, 2, 0]).int()
-            if norm is not None:
-                norm = MidpointNormalize(vmin=_x.min(), midpoint=0, vmax=_x.max())
             _im = ax[idx].imshow(_x, cmap=cmap, norm=norm)
             im.append(_im)
             ax[idx].axes.xaxis.set_ticks([])
@@ -53,7 +51,6 @@ def plot_cxr_grid(x, fig=None, ax=None, nrows=1, cmap="Greys_r", norm=None, cbar
                         0.01,
                     ]
                 )
-                # , ticks=mticker.MultipleLocator(25)) #, ticks=mticker.AutoLocator())
                 cbar = plt.colorbar(
                     im[i * n + j], cax=cbar_ax, orientation="horizontal"
                 )
@@ -181,7 +178,7 @@ def plot_counterfactual_viz_embed(args, x, cf_x, pa, cf_pa, do, rec_loc, save=Tr
         fig=fig,
         cmap="RdBu_r",
         cbar=True,
-        norm=MidpointNormalize(midpoint=0),
+        norm=MidpointNormalize(midpoint=0, vmin=-80, vmax=80),
     )
     _, _ = plot_cxr_grid(
         cf_x - x,
@@ -189,7 +186,7 @@ def plot_counterfactual_viz_embed(args, x, cf_x, pa, cf_pa, do, rec_loc, save=Tr
         fig=fig,
         cmap="RdBu_r",
         cbar=True,
-        norm=MidpointNormalize(midpoint=0),
+        norm=MidpointNormalize(midpoint=0, vmin=-80, vmax=80),
     )
     _, _ = plot_cxr_grid(
         cf_x - rec_loc,
@@ -197,7 +194,7 @@ def plot_counterfactual_viz_embed(args, x, cf_x, pa, cf_pa, do, rec_loc, save=Tr
         fig=fig,
         cmap="RdBu_r",
         cbar=True,
-        norm=MidpointNormalize(midpoint=0),
+        norm=MidpointNormalize(midpoint=0, vmin=-80, vmax=80),
     )
     scanner_categories = [
         "Selenia Dimensions",
@@ -205,6 +202,7 @@ def plot_counterfactual_viz_embed(args, x, cf_x, pa, cf_pa, do, rec_loc, save=Tr
         "Senograph 2000D",
         "Lorad Selenia",
         "Clearview CSm",
+        "Senographe Essential",
     ]
 
     for j in range(n):

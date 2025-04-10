@@ -155,3 +155,4 @@ causal-contrastive.code-workspace
 /data/
 MNIST/
 playground.py
+.DS_Store

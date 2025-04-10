@@ -1,8 +1,6 @@
 from pathlib import Path
 from tqdm import tqdm
-from causal_models.counterfactual_generation.save_cxr_counterfactuals import (
-    load_vae_and_module,
-)
+from causal_models.train_setup import load_vae_and_module
 
 import torch
 import numpy as np
@@ -16,7 +14,8 @@ def scanner_counterfactuals(
     batch,
     args,
     partial_abduct=None,
-    u_t=0.5,
+    u_t=1.0,
+    t=0.8,
     apply_sex_cf=False,
     apply_scanner_cf=True,
 ):
@@ -31,13 +30,13 @@ def scanner_counterfactuals(
         .float()
     )
 
-    zs = model.abduct(x=batch["x"].cuda(), parents=_pa.cuda(), t=0.1)
+    zs = model.abduct(x=batch["x"].cuda(), parents=_pa.cuda(), t=1e-5)
     if model.cond_prior:
         zs = [zs[j]["z"] for j in range(len(zs))]
     if partial_abduct is not None:
         zs = zs[:partial_abduct]
 
-    px_loc, px_scale = model.forward_latents(zs, parents=_pa, t=0.1)
+    px_loc, px_scale = model.forward_latents(zs, parents=_pa, t=t)
 
     cf_pa = {k: pa[k] for k in args.parents_x}
     if apply_scanner_cf:
@@ -54,7 +53,7 @@ def scanner_counterfactuals(
         .float()
     )
 
-    cf_loc, cf_scale = model.forward_latents(zs, parents=_cf_pa.cuda(), t=0.1)
+    cf_loc, cf_scale = model.forward_latents(zs, parents=_cf_pa.cuda(), t=t)
     px_loc, px_scale = model.forward_latents(latents=zs, parents=_pa)
     cf_loc, cf_scale = model.forward_latents(latents=zs, parents=_cf_pa)
 
@@ -78,13 +77,14 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--folder_for_counterfactuals",
-        default="padchest_cf_images_v0",
+        default="padchest_v2_images",
     )
 
     parser.add_argument("--loader", default="train", type=str)
 
     parsed_args = parser.parse_args()
-    vae, dataloader, args = load_vae_and_module(parsed_args.vae_path, cache=False)
+
+    vae, dataloader, args = load_vae_and_module(parsed_args.vae_path)
 
     if parsed_args.loader == "all":
         splits = ["train", "valid", "test"]
@@ -92,7 +92,7 @@ if __name__ == "__main__":
         assert parsed_args.loader in ["train", "valid", "test"]
         splits = [parsed_args.loader]
 
-    cf_dir = Path(args.folder_for_counterfactuals)
+    cf_dir = Path(parsed_args.folder_for_counterfactuals)
     cf_dir.mkdir(parents=True, exist_ok=True)
 
     for split in splits:
@@ -130,6 +130,8 @@ if __name__ == "__main__":
                                     batch=batch,
                                     args=args,
                                     u_t=1.0,
+                                    apply_scanner_cf=apply_scanner_cf,
+                                    apply_sex_cf=apply_sex_cf,
                                 )
                                 cf_x = (out_d["DE"] + 1) / 2.0
                                 for j in range(cf_x.shape[0]):

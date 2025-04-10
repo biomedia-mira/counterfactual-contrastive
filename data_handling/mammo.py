@@ -12,6 +12,7 @@ from torch.utils.data import Dataset
 from data_handling.base import BaseDataModuleClass
 from data_handling.caching import SharedCache
 from torchvision.transforms import Resize
+from data_handling.augmentations import DataAugmentationDINO
 
 import os
 
@@ -19,8 +20,6 @@ cluster_root = os.getenv("HOME", None)
 
 if Path("/data2/mb121/EMBED").exists():
     EMBED_ROOT = "/data2/mb121/EMBED"
-if Path("/data/EMBED").exists():
-    EMBED_ROOT = "/data/EMBED"
 elif cluster_root is not None and (Path(cluster_root) / "EMBED").exists():
     EMBED_ROOT = Path(cluster_root) / "EMBED"
 else:
@@ -112,6 +111,8 @@ def get_embed_csv():
     print(mydf.SimpleModelLabel.value_counts())
     mydf["ViewLabel"] = mydf.ViewPosition.apply(lambda x: 0 if x == "MLO" else 1)
 
+    mydf["CviewLabel"] = mydf.FinalImageType.apply(lambda x: 0 if x == "2D" else 1)
+
     mydf = mydf.dropna(
         subset=[
             "age_at_study",
@@ -121,6 +122,7 @@ def get_embed_csv():
             "image_path",
         ]
     )
+
     return mydf
 
 
@@ -199,44 +201,58 @@ class EmbedDataset(Dataset):
         ).detach()
         sample["y"] = self.labels[index]
         sample["scanner_int"] = self.scanner[index]
-        sample["scanner"] = torch.nn.functional.one_hot(
-            torch.tensor(self.scanner[index]).long(), num_classes=5
-        ).detach()
 
         # Only used for causal models
         if self.parents is not None:
+            sample["scanner"] = torch.nn.functional.one_hot(
+                torch.tensor(self.scanner[index]).long(), num_classes=5
+            ).detach()
             sample["pa"] = torch.cat(
                 [
-                    sample[c]
-                    if isinstance(sample[c], torch.Tensor)
-                    else torch.tensor([sample[c]])
+                    (
+                        sample[c]
+                        if isinstance(sample[c], torch.Tensor)
+                        else torch.tensor([sample[c]])
+                    )
                     for c in self.parents
                 ]
             ).detach()
 
-        if self.use_counterfactuals:
-            # original
-            rdn = torch.rand(1).item()
-            # if you sample the same scanner use real
-            # (p of same scanner is 1 out 5)
-            if rdn > 0.8:
-                cfx = img.clone()
-            # else sample one out of the 4 remaining
-            else:
-                cfx = self.load_counterfactual_image(index)
-                if not self.counterfactual_contrastive_pairs:
-                    img = cfx.clone()
-
-            img = self.transform(img)
-            cfx = self.transform(cfx)
-
-            img = torch.stack([img, cfx], dim=0)
-
+        if isinstance(self.transform, DataAugmentationDINO):
+            if self.use_counterfactuals:
+                if self.counterfactual_contrastive_pairs:
+                    if torch.rand(1).item() > 0.2:
+                        cfx = self.load_counterfactual_image(index)
+                    else:
+                        cfx = img.clone()
+                else:
+                    if torch.rand(1).item() > 0.2:
+                        cfx = self.load_counterfactual_image(index)
+                        img = cfx.clone()
+                    else:
+                        cfx = img.clone()
+                img = torch.stack([img, cfx], dim=0)
+            img = self.transform(img.float())
+            sample.update(img)
         else:
-            img = self.transform(img).float()
-
-        sample["x"] = img
-
+            if self.use_counterfactuals:
+                if self.counterfactual_contrastive_pairs:
+                    if torch.rand(1).item() > 0.2:
+                        cfx = self.load_counterfactual_image(index)
+                    else:
+                        cfx = img.clone()
+                else:
+                    if torch.rand(1).item() > 0.2:
+                        cfx = self.load_counterfactual_image(index)
+                        img = cfx.clone()
+                    else:
+                        cfx = img.clone()
+                img = self.transform(img)
+                cfx = self.transform(cfx)
+                img = torch.stack([img, cfx], dim=0)
+            else:
+                img = self.transform(img)
+            sample["x"] = img.float()
         return sample
 
     def __len__(self):
@@ -244,6 +260,7 @@ class EmbedDataset(Dataset):
 
     def load_counterfactual_image(self, index):
         short_path = str(self.shortpaths[index])[:-4]
+
         s = int(
             np.random.choice([a for a in range(5) if a != self.scanner[index]], size=1)
         )
@@ -252,10 +269,17 @@ class EmbedDataset(Dataset):
             "/vol/biomedic3/mb121/causal-contrastive/cf_beta1balanced_scanner"
         )
 
+        # cf_dir1 = Path(
+        #     '/vol/biomedic3/mb121/causal-contrastive/cf_finetuning_beta1balanced_scanner_new'
+        # )
+
+        # cf_dir1 = Path("/vol/biomedic3/mb121/causal-contrastive/cf_bad")
+
         filename = cf_dir1 / f"{short_path}_s{s}.png"
 
         img = io.imread(str(filename), as_gray=True) / 255.0
         assert img.max() <= 1
+
         return torch.tensor(img).unsqueeze(0).float()
 
 
@@ -268,6 +292,7 @@ class EmbedDataModule(BaseDataModuleClass):
         self, orig_df, label, domain=None, model=None, exclude_cviews=True
     ):
         df = orig_df.copy()
+
         print(len(df))
         if exclude_cviews:
             df = df.loc[df.FinalImageType == "2D"]
@@ -294,8 +319,8 @@ class EmbedDataModule(BaseDataModuleClass):
         val_id = val_id[:600]
 
         print(
-            f"N patients train: {train_id.shape[0]}, val: {val_id.shape[0]}, test {test_id.shape[0]}"  # noqa
-        )
+            f"N patients train: {train_id.shape[0]}, val: {val_id.shape[0]}, test {test_id.shape[0]}"
+        )  # noqa
 
         if self.config.data.prop_train < 1.0:
             train_id = np.sort(train_id)
@@ -385,7 +410,7 @@ class EmbedDataModule(BaseDataModuleClass):
             target_size=self.target_size,
             label=self.config.data.label,
             parents=self.parents,
-            cache=True,
+            cache=False,
         )
 
     @property
@@ -396,6 +421,8 @@ class EmbedDataModule(BaseDataModuleClass):
             case "SimpleModelLabel":
                 return 5
             case "ViewLabel":
+                return 2
+            case "CviewLabel":
                 return 2
             case _:
                 raise ValueError
@@ -425,8 +452,8 @@ class EmbedOODDataModule(EmbedDataModule):
         )
 
         print(
-            f"N patients train: {train_id.shape[0]}, val: {val_id.shape[0]}, test {test_id.shape[0]}"  # noqa
-        )
+            f"N patients train: {train_id.shape[0]}, val: {val_id.shape[0]}, test {test_id.shape[0]}"
+        )  # noqa
 
         if self.config.data.prop_train < 1.0:
             train_id, _ = train_test_split(
@@ -453,7 +480,7 @@ class EmbedOODDataModule(EmbedDataModule):
             transform=self.train_tsfm,
             target_size=self.target_size,
             label=self.config.data.label,
-            parents=self.parents,
+            parents=None,
             cache=self.config.data.cache,
             use_counterfactuals=self.config.data.use_counterfactuals,
             counterfactual_contrastive_pairs=self.config.data.counterfactual_contrastive,
@@ -464,7 +491,7 @@ class EmbedOODDataModule(EmbedDataModule):
             transform=self.val_tsfm,
             target_size=self.target_size,
             label=self.config.data.label,
-            parents=self.parents,
+            parents=None,
             cache=self.config.data.cache,
         )
 
@@ -473,7 +500,7 @@ class EmbedOODDataModule(EmbedDataModule):
             transform=self.val_tsfm,
             target_size=self.target_size,
             label=self.config.data.label,
-            parents=self.parents,
+            parents=None,
             cache=True,
         )
 
@@ -506,8 +533,8 @@ class VinDrDataModule(BaseDataModuleClass):
         )
         self.target_size = self.config.data.augmentations.resize
         print(
-            f"N patients train: {train_id.shape[0]}, val: {val_id.shape[0]}, test {test_id.shape[0]}"  # noqa
-        )
+            f"N patients train: {train_id.shape[0]}, val: {val_id.shape[0]}, test {test_id.shape[0]}"
+        )  # noqa
         if self.config.data.prop_train < 1.0:
             train_id = np.sort(train_id)
             y = (

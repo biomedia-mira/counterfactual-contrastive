@@ -8,23 +8,11 @@ from causal_models.trainer import preprocess_batch
 from torchvision.transforms import CenterCrop
 from causal_models.hps import Hparams
 from causal_models.hvae import HVAE2
-from causal_models.train_setup import setup_dataloaders
-
-
-def load_vae_and_module(vae_path):
-    args = Hparams()
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    checkpoint = torch.load(vae_path, map_location=device)
-    args.update(checkpoint["hparams"])
-    if not hasattr(args, "cond_prior"):
-        args.cond_prior = False
-    args.device = device
-    vae = HVAE2(args).to(args.device)
-    vae.load_state_dict(checkpoint["ema_model_state_dict"])
-    vae = vae.eval()
-    dataloaders = setup_dataloaders(args, cache=False, shuffle_train=False)
-    return vae, dataloaders, args
-
+from causal_models.train_setup import (
+    setup_dataloaders,
+    load_finetuned_vae,
+    load_vae_and_module,
+)
 
 if __name__ == "__main__":
     import argparse
@@ -36,13 +24,18 @@ if __name__ == "__main__":
         "--vae_path",
         default="/vol/biomedic3/mb121/causal-contrastive/outputs/scanner/beta1balanced/last_19.pt",
     )
-    parser.add_argument("--loader", default="train", type=str)
+    parser.add_argument("--loader", default="all", type=str)
     parser.add_argument(
         "--folder_for_counterfactuals",
         default="cf_beta1balanced_scanner",
     )
     parsed_args = parser.parse_args()
-    model, dataloader, args = load_vae_and_module(parsed_args.vae_path)
+    # model_path = '/vol/biomedic3/mb121/causal-contrastive/causal_models/counterfactual_evaluation/cf_finetune.ckpt'
+    # model, args = load_finetuned_vae(model_path)
+    # model_path = '/vol/biomedic3/mb121/causal-contrastive/outputs/scanner/bad/checkpoint.pt'
+
+    model, _, args = load_vae_and_module(parsed_args.vae_path)
+    dataloader = setup_dataloaders(args, cache=False, shuffle_train=False)
 
     if parsed_args.loader == "all":
         splits = ["train", "valid", "test"]
@@ -50,14 +43,15 @@ if __name__ == "__main__":
         assert parsed_args.loader in ["train", "valid", "test"]
         splits = [parsed_args.loader]
 
-    cf_dir = Path(args.folder_for_counterfactuals)
+    cf_dir = Path(parsed_args.folder_for_counterfactuals)
 
     cf_dir.mkdir(parents=True, exist_ok=True)
     model.cuda()
-    u_t = 0.5
-    t = 0.1
+    u_t = 1.0
+    t = 0.8
 
     for split in splits:
+        print(f"######### Starting {split} ######### ")
         loader = dataloader[split]
         with torch.no_grad():
             for i, batch in enumerate(tqdm(loader)):
@@ -70,7 +64,7 @@ if __name__ == "__main__":
                     .to(args.device)
                     .float()
                 )
-                zs = model.abduct(x=batch["x"].cuda(), parents=_pa.cuda(), t=t)
+                zs = model.abduct(x=batch["x"].cuda(), parents=_pa.cuda(), t=1e-5)
 
                 if model.cond_prior:
                     zs = [zs[j]["z"] for j in range(len(zs))]

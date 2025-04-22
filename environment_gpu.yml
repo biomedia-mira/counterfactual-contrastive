@@ -4,9 +4,6 @@ channels:
   - default
 dependencies:
   - python=3.11.5
-  - pytorch==2.1.1
-  - torchvision==0.16.1
-  - pytorch-cuda=12.1
   - pip
   - pip:
     - lightning==2.2.0.post0
@@ -31,3 +28,5 @@ dependencies:
     - torchmetrics==1.2.0
     - timm==0.9.16
     - xformers==0.0.23
+    - torch
+    - torchvision

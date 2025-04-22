@@ -253,17 +253,17 @@ class NestedTensorBlock(Block):
                 x_list,
                 residual_func=attn_residual_func,
                 sample_drop_ratio=self.sample_drop_ratio,
-                scaling_vector=self.ls1.gamma
-                if isinstance(self.ls1, LayerScale)
-                else None,
+                scaling_vector=(
+                    self.ls1.gamma if isinstance(self.ls1, LayerScale) else None
+                ),
             )
             x_list = drop_add_residual_stochastic_depth_list(
                 x_list,
                 residual_func=ffn_residual_func,
                 sample_drop_ratio=self.sample_drop_ratio,
-                scaling_vector=self.ls2.gamma
-                if isinstance(self.ls1, LayerScale)
-                else None,
+                scaling_vector=(
+                    self.ls2.gamma if isinstance(self.ls1, LayerScale) else None
+                ),
             )
             return x_list
         else:

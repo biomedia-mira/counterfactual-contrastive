@@ -57,12 +57,16 @@ def get_augmentations_from_config(config: DictConfig) -> Tuple[Callable, Callabl
             tf.ColorJitter(
                 brightness=config.augmentations.random_color_jitter,
                 contrast=config.augmentations.random_color_jitter,
-                hue=0
-                if config.input_channels == 1
-                else config.augmentations.random_color_jitter,
-                saturation=0
-                if config.input_channels == 1
-                else config.augmentations.random_color_jitter,
+                hue=(
+                    0
+                    if config.input_channels == 1
+                    else config.augmentations.random_color_jitter
+                ),
+                saturation=(
+                    0
+                    if config.input_channels == 1
+                    else config.augmentations.random_color_jitter
+                ),
             )
         )
 

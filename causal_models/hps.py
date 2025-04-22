@@ -33,13 +33,20 @@ embed.accu_steps = 2
 embed.bias_max_res = 64
 embed.x_like = "fixed_dgauss"
 embed.std_init = 1e-2
-embed.epochs = 20
+embed.epochs = 30
+embed.bs = 16
 HPARAMS_REGISTRY["embed"] = embed
+
+embedbad = copy.deepcopy(embed)
+embedbad.epochs = 1
+embedbad.beta = 2.0
+HPARAMS_REGISTRY["embedbad"] = embedbad
 
 padchest = copy.deepcopy(embed)
 padchest.parents_x = ["scanner", "sex"]
 padchest.context_dim = 2
 padchest.beta = 3.0
+padchest.epochs = 130
 HPARAMS_REGISTRY["padchest"] = padchest
 
 
@@ -57,6 +64,7 @@ def setup_hparams(parser):
 
 
 def add_arguments(parser):
+    parser.add_argument("--bs", help="batch size", type=str, default=16)
     parser.add_argument("--exp_name", help="Experiment name.", type=str, default="")
     parser.add_argument(
         "--data_dir", help="Data directory to load form.", type=str, default=""

@@ -1,0 +1,25 @@
+# @package _global_
+defaults:
+  - override /trainer: base
+  - override /data: padchest
+
+data:
+  batch_size: 112
+  label: sex
+  augmentations:
+    random_crop: [.7, 1.]
+    random_rotation: 20
+    random_color_jitter: .3
+    horizontal_flip: True
+    vertical_flip: True
+
+model:
+  encoder_name: "resnet18"
+  pretrained: True
+  
+trainer:
+  patience_for_scheduler: 10
+  metric_to_monitor: "Val/BalAccuracy"
+  metric_to_monitor_mode: "max"
+  lr: 1e-4
+  val_check_interval: 5000

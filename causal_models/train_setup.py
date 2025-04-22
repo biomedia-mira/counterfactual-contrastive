@@ -2,6 +2,8 @@ import logging
 import os
 
 import send2trash
+from causal_models.hps import Hparams
+from causal_models.hvae import HVAE2
 import torch
 from torch.utils.data import DataLoader
 import numpy as np
@@ -45,7 +47,7 @@ def setup_dataloaders(args, cache: bool = True, shuffle_train=True):
                 config_name="config.yaml",
                 overrides=[
                     "data=embed",
-                    "data.batch_size=16",
+                    f"data.batch_size={args.bs}",
                     f"data.cache={cache}",
                     f"data.exclude_cviews={'cview' not in args.parents_x}",
                 ],
@@ -183,3 +185,29 @@ def setup_logging(args):
     )
     logger = logging.getLogger(args.exp_name)  # name the logger
     return logger
+
+
+def load_vae_and_module(vae_path):
+    args = Hparams()
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    checkpoint = torch.load(vae_path, map_location=device)
+    args.update(checkpoint["hparams"])
+    if not hasattr(args, "cond_prior"):
+        args.cond_prior = False
+    args.device = device
+    vae = HVAE2(args).to(args.device)
+    vae.load_state_dict(checkpoint["ema_model_state_dict"])
+    vae = vae.eval()
+    dataloaders = setup_dataloaders(args, cache=False)
+    return vae, dataloaders, args
+
+
+def load_finetuned_vae(vae_path):
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    checkpoint = torch.load(vae_path, map_location=device)
+    args = checkpoint["hparams"]
+    args.device = device
+    vae = HVAE2(args).to(args.device)
+    vae.load_state_dict(checkpoint["state_dict"])
+    vae = vae.eval()
+    return vae, args

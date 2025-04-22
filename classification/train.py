@@ -63,21 +63,21 @@ def train_model_main(config):
         accelerator="auto",
         devices=config.trainer.device,
         strategy="ddp_find_unused_parameters_true" if n_gpus > 1 else "auto",
-        max_epochs=config.trainer.num_epochs
-        if config.trainer.max_steps == "None"
-        else -1,
-        max_steps=config.trainer.max_steps
-        if config.trainer.max_steps != "None"
-        else -1,
+        max_epochs=(
+            config.trainer.num_epochs if config.trainer.max_steps == "None" else -1
+        ),
+        max_steps=(
+            config.trainer.max_steps if config.trainer.max_steps != "None" else -1
+        ),
         logger=wandb_logger,
         callbacks=callbacks,
         precision=precision,
         fast_dev_run=config.is_unit_test_config,
-        val_check_interval=min(
-            config.trainer.val_check_interval, len(data_module.train_dataloader())
-        )
-        if config.trainer.val_check_interval != "None"
-        else None,
+        val_check_interval=(
+            min(config.trainer.val_check_interval, len(data_module.train_dataloader()))
+            if config.trainer.val_check_interval != "None"
+            else None
+        ),
         limit_val_batches=250,
     )
     if config.trainer.finetune_path != "None":

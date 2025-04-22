@@ -122,7 +122,7 @@ model_dict_normal: dict[str, str] = {
     "dinocfaug2head-0.1-33": "5npf83am",
     "dinocfaug2head-0.25-33": "t3ni32cs",
     "dinocfaug2head-1.0-11": "48d6jxas",
-    "dinocfaug2head-1.0-33": "5p9f52xe"
+    "dinocfaug2head-1.0-33": "5p9f52xe",
     # 'dinocfhead-1.0-55': '5efo7zov',
     # 'dinocfhead-1.0-44': '4eq4thdr',
     # 'dinocfhead-0.25-55': '9e4b5v29',

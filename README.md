@@ -6,6 +6,18 @@ This repository contains the code for the papers "Counterfactual contrastive lea
 
 ![alt text](figure1.png)
 
+Paper reference:
+```
+@inproceedings{roschewitz2024counterfactual,
+  title={Counterfactual contrastive learning: robust representations via causal image synthesis},
+  author={Roschewitz, M{\'e}lanie and de Sousa Ribeiro, Fabio and Xia, Tian and Khara, Galvin and Glocker, Ben},
+  booktitle={MICCAI Workshop on Data Engineering in Medical Imaging},
+  pages={22--32},
+  year={2024},
+  organization={Springer}
+}
+```
+
 ## Overview
 The repository is divided in three main parts:
 * The [causal_model/](causal_models/) folder contains all code related to counterfactual inference model training. It contains its own README, giving you all necessary commands to train a DSCM on EMBED and PadChest.

@@ -1,13 +1,22 @@
 # Robust representations for image classification via counterfactual contrastive learning
 
 This repository contains the code for the papers "Counterfactual contrastive learning: robust representations via causal image synthesis" and extended version "Robust representations for image classification via counterfactual contrastive learning". <br>
-[Paper presented at Data Engineering Workshop @ MICCAI 2024](https://arxiv.org/abs/2403.09605)<br>
-[Link to extended version (pre-print)](https://arxiv.org/abs/2409.10365)
+[Extended journal version, Medical Image Analysis, 2025](https://www.sciencedirect.com/science/article/pii/S1361841525002154?via%3Dihub)<br>
+[Conference paper version, presented at Data Engineering Workshop @ MICCAI 2024](https://arxiv.org/abs/2403.09605)<br>
 
 ![alt text](figure1.png)
 
-Paper reference:
+Paper references:
 ```
+@article{roschewitz2025robust,
+  title={Robust image representations with counterfactual contrastive learning},
+  author={Roschewitz, M{\'e}lanie and Ribeiro, Fabio De Sousa and Xia, Tian and Khara, Galvin and Glocker, Ben},
+  journal={Medical Image Analysis},
+  pages={103668},
+  year={2025},
+  publisher={Elsevier}
+}
+
 @inproceedings{roschewitz2024counterfactual,
   title={Counterfactual contrastive learning: robust representations via causal image synthesis},
   author={Roschewitz, M{\'e}lanie and de Sousa Ribeiro, Fabio and Xia, Tian and Khara, Galvin and Glocker, Ben},
